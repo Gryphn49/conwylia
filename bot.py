@@ -19,7 +19,7 @@ class Nation:
         self.owner = newOwner
 
 
-# On startup, read from JSON file of previously created nations and create nations for them.
+# On startup, read from pickle file of previously created nations and create nations for them.
 
 # storage dictionary pulled from pickle file of all nations & info 
 with open("storedNations.pkl", "rb") as tf:
@@ -48,21 +48,21 @@ async def on_message(message):
 # creating a nation in class nation
     if message.content == "&createNation":
         await message.channel.send('What is the nation called?')
-        msg = await client.wait_for("message", timeout=60.0)
-        NName = msg.content
+        Nname = await client.wait_for("message", timeout=60.0)
         await message.channel.send("Who is the owner?")
-        msg = await client.wait_for("message", timeout=60.0)
-        n1 = Nation(NName, msg.content) # nation created  
-        stored[n1.getName()] = {"owner" : n1.getOwner()} # nation added to storage dictionary
+        Nowner = await client.wait_for("message", timeout=60.0)
+        n = Nation(Nname.content, Nowner.content) # nation created  
+        stored[n.getName()] = {"owner" : n.getOwner()} # nation added to storage dictionary
         # storing all the nations and info
         with open("storedNations.pkl", "wb") as tf:
             pickle.dump(stored,tf)
             tf.close()
 
-    if message.content == "&nation":
+# all the information about a nation
+    if message.content == "&nation": 
         await message.channel.send('What is the nation called?')
-        msg = await client.wait_for("message", timeout=60.0)
-        msge = msg.content
+        Nname = await client.wait_for("message", timeout=60.0)
+        await message.channel.send("The nation " + nations[Nname.content].getName() + " is owned by " + nations[Nname.content].getOwner())
 
 
 
