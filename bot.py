@@ -5,6 +5,25 @@ import pickle
 # Class for all Nations
 
 class Nation:
+    """ 
+to do list
+- allies
+- trade partners
+- population ?
+- army size ? 
+- is in union? junior or senior?
+- treaties 
+- war
+- income
+    - separated into different types via taxes, trade, and so on
+- resources
+- buildings
+
+War based work:
+- Naval Combat
+- Land Combat
+
+"""
     def __init__(self, name, owner):
         self.name = name
         self.owner = owner
