@@ -1,5 +1,6 @@
 from time import time
 import discord
+import pickle
 
 # Class for all Nations
 
@@ -20,31 +21,15 @@ class Nation:
 
 # On startup, read from JSON file of previously created nations and create nations for them.
 
-# lst = [] # from json file list of nations
+# storage dictionary pulled from pickle file of all nations & info 
+with open("storedNations.pkl", "rb") as tf:
+    stored = pickle.load(tf)
+    tf.close()
+
+print(stored)
 
 
-# nations = {k: Nation(lst[k], "Unknown") for k in lst}
-
-
-stored = {"A":"1#100","B":"2#400","C":"3#34"}
-owners = []
-for key in stored:
-    owner = ""
-    for i in stored[key]:
-        if i != "#":
-            owner += i
-        else:
-            owners.append(owner)
-            break
-
-useful = []
-for key in stored:
-    useful.append(key) # this is really really poorly coded, but works so :shrug:
-nations = {key: Nation(key, owners[useful.index(key)]) for key in stored}
-
-print(nations["A"].getName())
-print(nations["A"].getOwner())
-
+nations = {key: Nation(key, stored[key]["owner"]) for key in stored} # creates nation class for each nation
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -67,8 +52,12 @@ async def on_message(message):
         NName = msg.content
         await message.channel.send("Who is the owner?")
         msg = await client.wait_for("message", timeout=60.0)
-        n1 = Nation(NName, msg.content)
-        stored[n1.getName()] = n1.getName() + "#" + n1.getOwner()
+        n1 = Nation(NName, msg.content) # nation created  
+        stored[n1.getName()] = {"owner" : n1.getOwner()} # nation added to storage dictionary
+        # storing all the nations and info
+        with open("storedNations.pkl", "wb") as tf:
+            pickle.dump(stored,tf)
+            tf.close()
 
     if message.content == "&nation":
         await message.channel.send('What is the nation called?')
