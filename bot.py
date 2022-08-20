@@ -18,6 +18,9 @@ to do list
     - separated into different types via taxes, trade, and so on
 - resources
 - buildings
+- expenses
+- just kinda overall the time in the play world lol
+- worked tiles
 
 War based work:
 - Naval Combat
@@ -70,18 +73,44 @@ async def on_message(message):
         Nname = await client.wait_for("message", timeout=60.0)
         await message.channel.send("Who is the owner?")
         Nowner = await client.wait_for("message", timeout=60.0)
-        n = Nation(Nname.content, Nowner.content) # nation created  
-        stored[n.getName()] = {"owner" : n.getOwner()} # nation added to storage dictionary
+        nations[Nname.content] = Nation(Nname.content, Nowner.content) # nation created  
+
+        stored[nations[Nname.content].getName()] = {"owner" : nations[Nname.content].getOwner()} # nation added to storage dictionary
         # storing all the nations and info
         with open("storedNations.pkl", "wb") as tf:
             pickle.dump(stored,tf)
             tf.close()
+        await message.channel.send("The nation " + Nname.conent + " has been added to the database.")
 
 # all the information about a nation
     if message.content == "&nation": 
         await message.channel.send('What is the nation called?')
         Nname = await client.wait_for("message", timeout=60.0)
-        await message.channel.send("The nation " + nations[Nname.content].getName() + " is owned by " + nations[Nname.content].getOwner())
+        try:
+            await message.channel.send("The nation " + nations[Nname.content].getName() + " is owned by " + nations[Nname.content].getOwner())
+        except KeyError:
+            await message.channel.send("That nation doesn't exist in the database.")
+
+    if message.content == "&nations":
+        nationsList = ""
+        for key in stored:
+            nationsList += (key + ", ")
+        nationsList = nationsList[:-2]
+        nationsList += "."
+        await message.channel.send("The nations currently in the database are: " + nationsList)
+
+    if message.content == "&deleteNation":
+        await message.channel.send('What is the nation called?')
+        Nname = await client.wait_for("message", timeout=60.0)
+        try:
+            del nations[Nname.content]
+            del stored[Nname.content]
+            with open("storedNations.pkl", "wb") as tf:
+                pickle.dump(stored,tf)
+                tf.close()
+            await message.channel.send("The nation " + Nname.conent + " has been deleted from the database.")
+        except KeyError:
+            await message.channel.send("That nation doesn't exist in the database.")
 
 
 
