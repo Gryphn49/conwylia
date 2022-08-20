@@ -8,7 +8,7 @@ import pickle
 class Nation:
     """ 
 to do list
-- allies
+- allies DONE
 - trade partners
 - population ?
 - army size ? 
@@ -33,10 +33,11 @@ War based work:
 - Land Combat
 
 """
-    def __init__(self, name, owner, allies=[]):
+    def __init__(self, name, owner, allies=[], tps=[]):
         self.name = name
         self.owner = owner
         self.allies = allies
+        self.tradePart = tps
 
     def getName(self):
         return self.name
@@ -51,10 +52,31 @@ War based work:
         self.allies.append(ally)
 
     def getAllies(self):
-        return self.allies
+        allies = self.allies
+        if len(allies) == 2:
+            return (self.name + " has 2 allies in the database: " + allies[0] + " and " + allies[1])
+        elif len(allies) == 1:
+            return (self.name + " has 1 ally in the database: " + allies[0])
+        else: 
+            return (self.name + " has no allies in the database.")
     
     def removeAlly(self, oldAlly):
         self.allies.remove(oldAlly)
+
+    def tradePartner(self, tp):
+        self.tradePart.append(tp)
+
+    def getTradePartners(self):
+        name = self.name
+        tps = self.tradePart()
+        if len(tps) == 3:
+            return (name + " has 3 trade partners in the database: " + tps[0] + " and " + tps[1] + " and " + tps[2])
+        elif len(tps) == 2:
+            return (name + " has 2 trade partners in the database: " + tps[0] + " and " + tps[1])
+        elif len(tps) == 1:
+            return (name + " has 1 trade partner in the database: " + tps[0])
+        else: 
+            return (name + " has no trade partners in the database.")
 
 
 nationFile = "storedNations.pkl"
@@ -149,12 +171,7 @@ async def on_message(message):
     if mg == "&allies":
         await message.channel.send(gnq1)
         Nname = await client.wait_for("message", timeout=60.0)
-        if len(nations[Nname.content].getAllies()) == 2:
-            await message.channel.send(nations[Nname.content].getName() + " has 2 allies in the database: " + nations[Nname.content].getAllies()[0] + " and " + nations[Nname.content].getAllies()[1])
-        elif len(nations[Nname.content].getAllies()) == 1:
-            await message.channel.send(nations[Nname.content].getName() + " has 1 ally in the database: " + nations[Nname.content].getAllies()[0])
-        else: 
-            await message.channel.send(nations[Nname.content].getName() + " has no allies in the database.")
+        await message.channel.send(nations[Nname.content].getAllies())
     
 # allies two nations both which are within the database
     if mg == "&ally":
