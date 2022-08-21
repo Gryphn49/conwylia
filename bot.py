@@ -148,10 +148,7 @@ async def on_message(message):
 
 # lists all the nations in the database
     if mg == "&nations":
-        nationsList = ""
-        for key in stored:
-            nationsList += (key + ", ")
-        await message.channel.send("The nations currently in the database are: " + nationsList[:-2] + ".")
+        await message.channel.send("The nations currently in the database are: " + ", ".join(stored.keys) + ".")
 
 # deletes a nation from the database
     if mg == "&deleteNation":
