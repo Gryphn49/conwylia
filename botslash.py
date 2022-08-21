@@ -122,11 +122,11 @@ with open(nationFile, "rb") as tf:
 print(stored) # prints stored -- honestly as more or less a check for me to see that everything looks fine. This can be removed later.
 
 # to prevent nations from messing *everything* up -- this is just here for whenever I add a new attribute to the nation class, because then some nations might have the new thing, and others won't. nations then freaks out when it has something different.
-for key in stored:  
-    stored[key]["tps"] = []
-    stored[key]["allies"] = [] 
-    stored[key]["un"] = ""
-    stored[key]["uP"] = ""
+# for key in stored:  
+#     stored[key]["tps"] = []
+#     stored[key]["allies"] = [] 
+#     stored[key]["un"] = ""
+#     stored[key]["uP"] = ""
 
 
 
@@ -438,8 +438,8 @@ async def unionize(interaction:discord.Interaction, nation_name: str, union_nati
             await interaction.response.send_message(f"{nations[union_nation].name} cannot be in a union with any more nations.")
             return
         if seniority: # all allies and trade partners stick with the senior nation.
-            nations[nation_name].unionize(union_nation, "Senior")
-            nations[union_nation].unionize(nation_name, "Junior")
+            nations[nation_name].unionize(union_nation, True)
+            nations[union_nation].unionize(nation_name, False)
 
             nations[union_nation].tradePart = nations[nation_name].tradePart
             nations[union_nation].allies = nations[nation_name].allies
@@ -447,8 +447,8 @@ async def unionize(interaction:discord.Interaction, nation_name: str, union_nati
             stored[nations[union_nation].name]["allies"] = nations[union_nation].allies
 
         else:
-            nations[nation_name].unionize(union_nation, "Junior")
-            nations[union_nation].unionize(nation_name, "Senior")
+            nations[nation_name].unionize(union_nation, False)
+            nations[union_nation].unionize(nation_name, True)
 
             nations[nation_name].tradePart = nations[union_nation].tradePart
             nations[nation_name].allies = nations[union_nation].allies
@@ -479,17 +479,59 @@ async def autocomplete(interaction: discord.Interaction, current: str,) -> List[
 
 
 
-
-
-# @testing.autocomplete("nation_name")
-# async def testing_autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
-#     nationNames = stored.keys()
-#     return [app_commands.Choice(name=nation_name, value=nation_name) for nation_name in nationNames if current.lower() in nation_name.lower()]
-
-
 @tree.command(name="deunionize", description="Allows a nation to deunionize with another nation.", guild=testServer) # I acknowledge that this requires war on the part of the junior partner. I've coded it so that it can be translated easily to that system, but since war isn't up yet, it's not set up.
-async def self(interaction:discord.Interaction):
-    return
+async def deunion(interaction:discord.Interaction, nation_name: str, union_nation: str):
+    if nations[nation_name].uP == "": # if asking nation has a union already
+        await interaction.response.send_message(f"{nations[nation_name].name} is not in a union.")
+        return
+    if union_nation in nations:
+        if nations[union_nation].uP == "": # 
+            await interaction.response.send_message(f"{nations[union_nation].name} is not in a union.")
+            return
+        if nations[nation_name].unionStatus == "Senior": # all allies and trade partners stick with the senior nation, while the junior loses all allies and trade partners.
+                                                         # If the main nation is the senior nation, the other goes blank.
+            nations[nation_name].deUnionize()
+            nations[union_nation].deUnionize()
+
+            nations[union_nation].tradePart = []
+            nations[union_nation].allies = []
+            stored[nations[union_nation].name]["tps"] = nations[union_nation].tradePart
+            stored[nations[union_nation].name]["allies"] = nations[union_nation].allies
+
+        else: # or the unioned nation is senior, and the main nation goes blank instead. 
+              # It's here that there would be war stuff.
+
+            nations[nation_name].deUnionize()
+            nations[union_nation].deUnionize()
+
+            nations[nation_name].tradePart = []
+            nations[nation_name].allies = []
+            stored[nations[nation_name].name]["tps"] = nations[nation_name].tradePart
+            stored[nations[nation_name].name]["allies"] = nations[nation_name].allies
+
+
+        stored[nations[nation_name].name]["un"] = nations[nation_name].unionStatus
+        stored[nations[union_nation].name]["un"] = nations[union_nation].unionStatus
+        stored[nations[nation_name].name]["uP"] = nations[nation_name].uP
+        stored[nations[union_nation].name]["uP"] = nations[union_nation].uP
+
+        
+        with open(nationFile, "wb") as tf: # storing new data
+            pickle.dump(stored,tf)
+            tf.close()
+        await interaction.response.send_message(f"{nations[nation_name].name} is no longer in a union with {nations[union_nation].name}.") # response
+    else:
+        await interaction.response.send_message(f"The nation {union_nation} doesn't exist in the database.") 
+
+@deunion.autocomplete("nation_name")
+async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
+    return [app_commands.Choice(name=nation_name, value=nation_name) for nation_name in stored.keys() if current.lower() in nation_name.lower()]
+
+@deunion.autocomplete("union_nation")
+async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
+    return [app_commands.Choice(name=union_nation, value=union_nation) for union_nation in stored.keys() if current.lower() in union_nation.lower()]
+
+
 
 # @tree.command(name="blank", description="blank", guild=testServer)
 # async def self(interaction:discord.Interaction):
