@@ -61,7 +61,7 @@ War based work:
             return (self.name + " has no allies in the database.")
     
     def removeAlly(self, oldAlly):
-        self.allies.remove(oldAlly)
+            self.allies.remove(oldAlly)
 
     def tradePartner(self, tp):
         self.tradePart.append(tp)
@@ -130,7 +130,7 @@ async def on_message(message):
         Nowner = await client.wait_for("message", timeout=60.0)
         nations[Nname.content] = Nation(Nname.content, Nowner.content) # nation created  
 
-        stored[nations[Nname.content].getName()] = {"owner" : nations[Nname.content].getOwner()} # nation added to storage dictionary
+        stored[nations[Nname.content].name] = {"owner" : nations[Nname.content].owner} # nation added to storage dictionary
         # storing all the nations and info
         with open(nationFile, "wb") as tf:
             pickle.dump(stored,tf)
@@ -142,7 +142,7 @@ async def on_message(message):
         await message.channel.send(gnq1)
         Nname = await client.wait_for("message", timeout=60.0)
         try:
-            await message.channel.send("The nation " + nations[Nname.content].getName() + " is owned by " + nations[Nname.content].getOwner() + ".")
+            await message.channel.send("The nation " + nations[Nname.content].name + " is owned by " + nations[Nname.content].owner + ".")
         except KeyError:
             await message.channel.send("That nation doesn't exist in the database.")
 
@@ -180,19 +180,22 @@ async def on_message(message):
         await message.channel.send("What nation are they allied with?")
         Nally = await client.wait_for("message", timeout=60.0)
         if len(nations[Nname.content].getAllies()) == 2:
-            await message.channel.send(nations[Nname.content].getName() + " cannot ally with any more nations.")
+            await message.channel.send(nations[Nname.content].name + " cannot ally with any more nations.")
             return
         if Nally.content in nations:
             if len(nations[Nally.content].getAllies()) == 2:
-                await message.channel.send(nations[Nally.content].getName() + " cannot ally with any more nations.")
+                await message.channel.send(nations[Nally.content].name + " cannot ally with any more nations.")
+                return
+            if nations[Nally.content] not in nations[Nname.content].allies:
+                await message.channel.send(nations[Nname.content].name + " is not allied with " + nations[Nally.content].name)
             nations[Nname.content].ally(Nally.content)
             nations[Nally.content].ally(Nname.content)
-            stored[nations[Nname.content].getName()]["allies"] = nations[Nname.content].getAllies()
-            stored[nations[Nally.content].getName()]["allies"] = nations[Nally.content].getAllies()
+            stored[nations[Nname.content].name]["allies"] = nations[Nname.content].getAllies()
+            stored[nations[Nally.content].name]["allies"] = nations[Nally.content].getAllies()
             with open(nationFile, "wb") as tf:
                 pickle.dump(stored,tf)
                 tf.close()
-            await message.channel.send(nations[Nname.content].getName() +  " is now allied with " + Nally.content)
+            await message.channel.send(nations[Nname.content].name +  " is now allied with " + Nally.content)
         else:
             await message.channel.send("The nation " + Nally.content + " doesn't exist in the database.")
 
@@ -205,12 +208,12 @@ async def on_message(message):
         if Nally.content in nations:
             nations[Nname.content].removeAlly(Nally.content)
             nations[Nally.content].removeAlly(Nname.content)
-            stored[nations[Nname.content].getName()]["allies"] = nations[Nname.content].getAllies()
-            stored[nations[Nally.content].getName()]["allies"] = nations[Nally.content].getAllies()
+            stored[nations[Nname.content].name]["allies"] = nations[Nname.content].getAllies()
+            stored[nations[Nally.content].name]["allies"] = nations[Nally.content].getAllies()
             with open(nationFile, "wb") as tf:
                 pickle.dump(stored,tf)
                 tf.close()
-            await message.channel.send(nations[Nname.content].getName() +  " is no longer allied with " + Nally.content)
+            await message.channel.send(nations[Nname.content].name +  " is no longer allied with " + Nally.content)
         else:
             await message.channel.send("The nation " + Nally.content + " doesn't exist in the database.")
 
@@ -221,7 +224,7 @@ async def on_message(message):
         await message.channel.send("Who is the new owner?")
         NNowner = await client.wait_for("message", timeout=60.0)
         nations[Nname.content].setOwner(NNowner.content)
-        stored[nations[Nname.content].getName()]["owner"] = nations[Nname.content].getOwner()
+        stored[nations[Nname.content].name]["owner"] = nations[Nname.content].owner
         with open(nationFile, "wb") as tf:
             pickle.dump(stored,tf)
             tf.close()
