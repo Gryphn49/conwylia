@@ -1,4 +1,5 @@
 from cgi import test
+from code import interact
 from time import time
 from tkinter import N
 import discord
@@ -103,17 +104,17 @@ with open(nationFile, "rb") as tf:
     tf.close()
 
 print(stored)
-
+# stored[key]["allies"]
 # stored layout ==      stored = {"name" : {"owner":"x", "allies":["x","y"], ...}, "name2" : and so on}
 
-nations = {key: Nation(key, stored[key]["owner"], stored[key]["allies"]) for key in stored} # creates nation class for each nation
+nations = {key: Nation(key, stored[key]["owner"], []) for key in stored} # creates nation class for each nation
 
 
 
 
 
 
-
+testServer = discord.Object(id=1010602651060277279)
 class aclient(discord.Client):
     def __init__(self):
         super().__init__(intents = discord.Intents.default())
@@ -131,41 +132,48 @@ tree = app_commands.CommandTree(client)
 gnq1 = 'What is the nation called?'
 
 
-@tree.command(name = "createnation", description="Creating a nation in the database", guild = discord.Object(id=1010602651060277279))
-async def self(interaction: discord.Interaction, name: str):
-        nations[name] = Nation(name, "joe") # nation created  
+# creating a nation in class nation
+@tree.command(name = "createnation", description="Creates a nation in the database", guild = discord.Object(id=1010602651060277279))
+async def self(interaction: discord.Interaction, name: str, owner: str):
+        nations[name] = Nation(name, owner) # nation created  
 
-        stored[nations[name].name] = {"owner" : "joe"} # nation added to storage dictionary
+        stored[nations[name].name] = {"owner" : nations[name].owner} # nation added to storage dictionary
         # storing all the nations and info
         with open(nationFile, "wb") as tf:
             pickle.dump(stored,tf)
             tf.close()
         await interaction.response.send_message("The nation " + name + " has been added to the database.")
 
+# shows all the commands accessible
+@tree.command(name = "help", description="Lists all the commands possible with Conwylia Bot", guild = discord.Object(id=1010602651060277279))
+async def self(interaction: discord.Interaction):
+    await interaction.response.send_message("""
+                            The following commands are active: 
+                            /createNation (Name Of Nation) (Owner Of Nation) -- Creates a nation in the database. 
+                            /help -- Lists all the commands possible with this bot.
+                            /nation (Name of Nation) -- Looks up info on a particular nation in the database. 
+                            &nations -- Lists all the nations in the database. 
+                            &deleteNation -- Deletes a nation from the database.
+                            &ally -- Allies with another nation in the database.
+                            &allies -- Lists all the allies of a nation in the database.
+                            &removeAlly -- Removes an allies between two nations.
+                            """)
+ 
+# all the information about a nation
+@tree.commmand(name = "nation", description = "Shows information about a nation", guild = discord.Object(id=1010602651060277279))
+async def self(interaction: discord.Interaction, name: str): 
+    try:
+        await interaction.response.send_message("The nation " + nations[name].name + " is owned by " + nations[name].owner + ".")
+    except KeyError:
+        await interaction.response.send_message("That nation doesn't exist in the database.")
 
 
 
 """
-@client.event
-async def on_message(message):
-    mg = message.content
-    if message.author == client.user:
-        return
 
-# shows all the commands accessable
-    if mg == "&help":
-        await message.channel.send(""
-                                    The following commands are active: 
-                                    \n &createNation -- Creates a nation in the database. 
-                                    \n &nation -- Looks up info on a particular nation in the database. 
-                                    \n &nations -- Lists all the nations in the database. 
-                                    \n &deleteNation -- Deletes a nation from the database.
-                                    \n &ally -- Allies with another nation in the database.
-                                    \n &allies -- Lists all the allies of a nation in the database.
-                                    \n &removeAlly -- Removes an allies between two nations.
-                                    "")
+ 
 
-# creating a nation in class nation
+
     
 
 # all the information about a nation
