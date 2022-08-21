@@ -26,10 +26,10 @@ class Nation:
     """ 
 to do list
 - allies DONE
-- trade partners
+- trade partners -- more or less done
 - population ?
 - army size ? 
-- is in union? junior or senior?
+- is in union? junior or senior? 
 - treaties 
 - war
 - income
@@ -50,11 +50,13 @@ War based work:
 - Land Combat
 
 """
-    def __init__(self, name, owner, allies=[], tps=[]):
+    def __init__(self, name, owner, allies=[], tps=[], union="", uP=""):
         self.name = name
         self.owner = owner
         self.allies = allies
         self.tradePart = tps
+        self.union = union
+        self.uP = uP # union partner
 
     def getName(self):
         return self.name
@@ -71,11 +73,11 @@ War based work:
     def getAllies(self):
         allies = self.allies
         if len(allies) == 2:
-            return (self.name + " has 2 allies in the database: " + allies[0] + " and " + allies[1])
+            return (f"{self.name} has 2 allies in the database: {allies[0]} and {allies[1]}.")
         elif len(allies) == 1:
-            return (self.name + " has 1 ally in the database: " + allies[0])
+            return (f"{self.name} has 1 ally in the database: {allies[0]}.")
         else: 
-            return (self.name + " has no allies in the database.")
+            return (f"{self.name} has no allies in the database.")
     
     def removeAlly(self, oldAlly):
             self.allies.remove(oldAlly)
@@ -89,17 +91,26 @@ War based work:
         tps = self.tradePart
         print("3")
         if len(tps) == 3:
-            return (name + " has 3 trade partners in the database: " + tps[0] + " and " + tps[1] + " and " + tps[2])
+            return (f"{name} has 3 trade partners in the database: {tps[0]} and {tps[1]} and {tps[2]}.")
         elif len(tps) == 2:
-            return (name + " has 2 trade partners in the database: " + tps[0] + " and " + tps[1])
+            return (f"{name} has 2 trade partners in the database: {tps[0]} and {tps[1]}.")
         elif len(tps) == 1:
             print("4")
-            return (name + " has 1 trade partner in the database: " + tps[0])
+            return (f"{name} has 1 trade partner in the database: {tps[0]}.")
         else: 
-            return (name + " has no trade partners in the database.")
+            return (f"{name} has no trade partners in the database.")
 
     def removeTradePartner(self, oldTp):
         self.tradePart.remove(oldTp)
+
+    def unions(self):
+        union = self.union
+        if union == "False":
+            return (f"{self.name} is not in a union in the database.")
+        elif union == "Senior" or union == "Junior":
+            return (f"{self.name} is in a union in the database with {self.uP}.")
+        else: 
+            return (f"{self.name} is not in a union in the database.")        
 
 
 nationFile = "storedNations.pkl"
@@ -114,7 +125,7 @@ print(stored)
 
 # to prevent nations from messing *everything* up
 # for key in stored:    
-#     stored[key]["tps"] = []
+#     stored[key]["union"] = ""
 
 
 
@@ -157,7 +168,7 @@ async def self(interaction: discord.Interaction, name: str, owner: str):
     with open(nationFile, "wb") as tf:
         pickle.dump(stored,tf)
         tf.close()
-    await interaction.response.send_message("The nation " + name + " has been added to the database.")
+    await interaction.response.send_message(f"The nation {name} has been added to the database.")
 
 # shows all the commands accessible
 @tree.command(name = "help", description="Lists all the commands possible with Conwylia Bot.", guild = discord.Object(id=1010602651060277279))
@@ -181,7 +192,7 @@ The following commands are active:
 @tree.command(name = "nation", description = "Shows information about a nation.", guild = testServer)
 async def self(interaction: discord.Interaction, name: str): 
     try:
-        await interaction.response.send_message("The nation " + nations[name].name + " is owned by " + nations[name].owner + ".")
+        await interaction.response.send_message(f"The nation {nations[name].name} is owned by {nations[name].owner}.")
     except KeyError:
         await interaction.response.send_message("That nation doesn't exist in the database.", ephemeral=True)
 
@@ -189,7 +200,7 @@ async def self(interaction: discord.Interaction, name: str):
 # lists all the nations in the database
 @tree.command(name="nations", description="Lists all the nations in the database.", guild=testServer)
 async def self(interaction: discord.Interaction):
-    await interaction.response.send_message("The nations currently in the database are: " + ", ".join(stored.keys()) + ".")
+    await interaction.response.send_message("The nations currently in the database are: %s.")%", ".join(stored.keys())
 
 # deletes a nation from the database
 @tree.command(name="deletenation", description="Deletes a nation from the database.", guild=testServer)
@@ -200,7 +211,7 @@ async def self(interaction: discord.Interaction, name: str):
         with open(nationFile, "wb") as tf:
             pickle.dump(stored,tf)
             tf.close()
-        await interaction.response.send_message("The nation " + name + " has been deleted from the database.")
+        await interaction.response.send_message(f"The nation {name} has been deleted from the database.")
     except KeyError:
         await interaction.response.send_message("That nation doesn't exist in the database.", ephemeral=True)
 
@@ -217,11 +228,11 @@ async def self(interaction: discord.Interaction, name: str):
 @tree.command(name="ally", description="Allies two nations that are within the database.", guild=testServer)
 async def self(interaction: discord.Interaction, nation_name: str, allied_nation_name: str):
     if len(nations[nation_name].allies) == 2:
-        await interaction.response.send_message(nations[nation_name].name + " cannot ally with any more nations.")
+        await interaction.response.send_message(f"{nations[nation_name].name} cannot ally with any more nations.")
         return
     if allied_nation_name in nations:
         if len(nations[allied_nation_name].allies) == 2:
-            await interaction.response.send_message(nations[allied_nation_name].name + " cannot ally with any more nations.")
+            await interaction.response.send_message(f"{nations[allied_nation_name].name} cannot ally with any more nations.")
             return
         nations[nation_name].ally(allied_nation_name)
         nations[allied_nation_name].ally(nation_name)
@@ -230,16 +241,16 @@ async def self(interaction: discord.Interaction, nation_name: str, allied_nation
         with open(nationFile, "wb") as tf:
             pickle.dump(stored,tf)
             tf.close()
-        await interaction.response.send_message(nations[nation_name].name +  " is now allied with " + nations[allied_nation_name].name)
+        await interaction.response.send_message(f"{nations[nation_name].name} is now allied with {nations[allied_nation_name].name}.")
     else:
-        await interaction.response.send_message("The nation " + allied_nation_name + " doesn't exist in the database.")
+        await interaction.response.send_message(f"The nation {allied_nation_name} doesn't exist in the database.")
 
 # removes an alliance between two nations within the database
 @tree.command(name="removeally", description="Removes an alliance between two nations within the database.", guild=testServer)
 async def self(interaction: discord.Interaction, nation_name: str, allied_nation_name: str):
     if allied_nation_name in nations:
         if nations[allied_nation_name].name not in nations[nation_name].allies:
-            await interaction.response.send_message(nations[nation_name].name + " is not allied with " + nations[allied_nation_name].name)
+            await interaction.response.send_message(f"{nations[nation_name].name} is not allied with {nations[allied_nation_name].name}.")
             return
         nations[nation_name].removeAlly(allied_nation_name)
         nations[allied_nation_name].removeAlly(nation_name)
@@ -248,9 +259,9 @@ async def self(interaction: discord.Interaction, nation_name: str, allied_nation
         with open(nationFile, "wb") as tf:
             pickle.dump(stored,tf)
             tf.close()
-        await interaction.response.send_message(nations[nation_name].name +  " is no longer allied with " + allied_nation_name)
+        await interaction.response.send_message(f"{nations[nation_name].name} is no longer allied with {allied_nation_name}.")
     else:
-        await interaction.response.send_message("The nation " + allied_nation_name + " doesn't exist in the database.")
+        await interaction.response.send_message(f"The nation {allied_nation_name} doesn't exist in the database.")
 
 # changes a nation's owner
 @tree.command(name="setowner", description="Changes a nation's owner", guild=testServer)
@@ -260,16 +271,16 @@ async def self(interaction:discord.Interaction, nation_name: str, new_owner: str
     with open(nationFile, "wb") as tf:
         pickle.dump(stored,tf)
         tf.close()
-    await interaction.response.send_message(nations[nation_name].owner +  " is the new owner of " + nations[nation_name].name)
+    await interaction.response.send_message(f"{nations[nation_name].owner} is the new owner of {nations[nation_name].name}.")
 
 @tree.command(name="partner", description="Partners two nations in the database as trade partners.", guild=testServer)
 async def self(interaction:discord.Interaction, nation_name: str, trade_partner_nation: str):
     if len(nations[nation_name].tradePart) == 3:
-        await interaction.response.send_message(nations[nation_name].name + " cannot become trade partners with any more nations.")
+        await interaction.response.send_message(f"{nations[nation_name].name} cannot become trade partners with any more nations.")
         return
     if trade_partner_nation in nations:
         if len(nations[trade_partner_nation].tradePart) == 3:
-            await interaction.response.send_message(nations[trade_partner_nation].name + " cannot become trade partners with any more nations.")
+            await interaction.response.send_message(f"{nations[trade_partner_nation].name} cannot become trade partners with any more nations.")
             return
         nations[nation_name].ally(trade_partner_nation)
         nations[trade_partner_nation].ally(nation_name)
@@ -278,9 +289,9 @@ async def self(interaction:discord.Interaction, nation_name: str, trade_partner_
         with open(nationFile, "wb") as tf:
             pickle.dump(stored,tf)
             tf.close()
-        await interaction.response.send_message(nations[nation_name].name +  " is now trade partners with " + nations[trade_partner_nation].name)
+        await interaction.response.send_message(f"{nations[nation_name].name} is now trade partners with {nations[trade_partner_nation].name}.")
     else:
-        await interaction.response.send_message("The nation " + trade_partner_nation + " doesn't exist in the database.")
+        await interaction.response.send_message(f"The nation {trade_partner_nation} doesn't exist in the database.")
 
 @tree.command(name="partners", description="Lists the trade partners of a nation in the database.", guild=testServer)
 async def self(interaction:discord.Interaction, nation_name: str):
@@ -294,7 +305,7 @@ async def self(interaction:discord.Interaction, nation_name: str):
 async def self(interaction:discord.Interaction, nation_name: str, trade_partner_nation: str):
     if trade_partner_nation in nations:
         if nations[trade_partner_nation].name not in nations[nation_name].tradePart:
-            await interaction.response.send_message(nations[nation_name].name + " is not trade partners with " + nations[trade_partner_nation].name)
+            await interaction.response.send_message(f"{nations[nation_name].name} is not trade partners with {nations[trade_partner_nation].name}.")
             return
         nations[nation_name].removeTradePartner(trade_partner_nation)
         nations[trade_partner_nation].removeTradePartner(nation_name)
@@ -303,11 +314,12 @@ async def self(interaction:discord.Interaction, nation_name: str, trade_partner_
         with open(nationFile, "wb") as tf:
             pickle.dump(stored,tf)
             tf.close()
-        await interaction.response.send_message(nations[nation_name].name +  " is no longer trade partners with " + trade_partner_nation)
+        await interaction.response.send_message(f"{nations[nation_name].name} is no longer trade partners with {trade_partner_nation}.")
     else:
-        await interaction.response.send_message("The nation " + trade_partner_nation + " doesn't exist in the database.")
+        await interaction.response.send_message(f"The nation {trade_partner_nation} doesn't exist in the database.")
 
-
+@tree.command(name=" ", description=" ", guild=testServer)
+async def self(interaction:discord.Interaction):
 
 
 
