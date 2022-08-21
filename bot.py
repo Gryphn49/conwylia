@@ -226,5 +226,7 @@ async def on_message(message):
             pickle.dump(stored,tf)
             tf.close()
 
-
-client.run('id')
+try:
+    client.run('id')
+finally:
+    print("Shutting down....") # eventually I'll move stored saving to here to make it simpler, but for now, it's safer for me not to.
