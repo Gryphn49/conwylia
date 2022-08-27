@@ -37,23 +37,69 @@ War based work:
 
 """
 
+# calling a nation's resource 
+class Resource:
 
+    def __init__(self, name, type, desc):
+        self.name = name
+        self.desc = desc
+        self.type = type
 
+resIron = Resource("Iron", "Mil", "Used to equip armies with weapons.")
+resHorse = Resource("Horse", "Mil", "Horses are used by the cavalry units of a nation.")
+resWood = Resource("Wood", "Mil", "Wood is used to make ships.")
+
+resGold = Resource("Gold", "Lux", "Gold has always been very rare and an expensive luxury item.")
+resGem = Resource("Gems", "Lux", "Jewels have always been very rare and expensive luxury items.")
+resSpice = Resource("Spices", "Lux", "Spices are a very good way to preserve and season foods, and are a hot commodity among people who can get their hands on them.")
+resFur = Resource("Furs", "Lux", "Furs are an essential luxury item to those living in cold climates, or just want to look fancy.")
+
+# this is the tile class for all nation's tiles
+class Tile:
+
+    def __init__(self, name, pop, res, rt):
+        self.name = name # type of tile
+        self.pop = pop # population of said tile in thousands
+        self.res = res # resources of tile in a list displaying the Resource instance of the resources given by the tile.
+        self.rt = rt # rough terrain y/n
+
+tileMountain = Tile("Mountain", 5, [resIron], True)         # sometimes gold/gems
+tileHills = Tile("Hills", 15, [], True)                     # sometimes iron
+tilePlains = Tile("Plains", 20, [], False)                  # sometimes horse
+tileSavannah = Tile("Savannah", 15, [], False)              # sometimes horse or iron
+tileTundra = Tile("Tundra", 10, [], False)                  # sometimes fur
+tileForest = Tile("Forest", 15, [resWood, resWood], True)   # no sometimes :)
+tileTaiga = Tile("Taiga", 10, [resWood, resWood], True)     # sometimes fur
+tileMarsh = Tile("Marsh", 10, [resWood], True)              # no sometimes :)
+tileJungle = Tile("Jungle", 5, [resWood, resWood], True)    # sometimes spice
+tileDesert = Tile("Desert", 0, [], False)                   # 
+tileIce = Tile("Ice", 0, [], False)                         # sometimes gold or iron
+tileLake = Tile("Lake", 0, [], False)                       #
+tileRiver = Tile("River", 0, [], False)                     #
+tileOcean = Tile("Ocean", 0, [], False)                     #
 
 
 
 
 # Class for all Nations
 
+
+# so when you want to access a nation's resource, you want to see what resources they have access to through which tiles they have, which gives the resource instance of whatever resource
+# the number of resource calculation is done IN Nation, based purely on Tile. 
+
 class Nation:
 
-    def __init__(self, name, owner, allies=[], tps=[], union="", uP=""):
+    def __init__(self, name, owner, allies=[], tps=[], union="", uP="", tiles=[]):
         self.name = name # name of nation
         self.owner = owner # name of owner (of nation)
         self.allies = allies # list of allies
         self.tradePart = tps # list  of trade partners
         self.unionStatus = union # is union -- Options: blank (not set), False, Senior, Junior
         self.uP = uP # union partner
+        self.tiles = tiles # list of Tile instances that the nation has
+        self.resources = [] # ideally a list of Resource class instances 
+        for tile in self.tiles: # for each individual Tile instance in tiles
+            self.resources += tile.res
 
     def setOwner(self, newOwner): # sets a new owner
         self.owner = newOwner
@@ -110,6 +156,15 @@ class Nation:
         self.uP = ""
         self.unionStatus = "False"
 
+    def tileList(self):
+        tileNames = [tile.name for tile in self.tiles]  
+        print(self.name + "has the following tiles: " + ", ".join(tileNames) +".")
+
+    def resourceList(self):
+        resourceNames = [resource.name for resource in self.resources]
+        print(self.name + "has the following resources: " + ", ".join(resourceNames) +".")
+
+
 
 nationFile = "storedNations.pkl" # this is the local pickle file that stores the information when the code is shut down.
 # On startup, read from pickle file of previously created nations and create nations for them.
@@ -137,6 +192,15 @@ print(stored) # prints stored -- honestly as more or less a check for me to see 
 nations = {key: Nation(key, stored[key]["owner"], stored[key]["allies"], stored[key]["tps"], stored[key]["un"], stored[key]["uP"]) for key in stored} # creates nation class for each nation from the information provided in stored.
 # as it was described to me after I did it and it looked confusing, stored is the layout that the pickle file needs to not lose information, and nations is the layout I need/like to make use of the class so that I can do stuff.
 # in an ideal world, stored would only be opened once, and saved/closed once, but given how I'm shutting the code without it being able to do finally code, I need to have it save after each update to it. This can probably be changed at a later point, but it works currently.
+
+
+idk = Nation("idk", "wat", [], [], "", "", [tileMountain, tileForest, tileForest])
+idk.tileList()
+idk.resourceList()
+
+
+
+
 
 
 
