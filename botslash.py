@@ -9,24 +9,13 @@ from discord import ui
 
 
 
-
-
-
-
-
-
-
-
-# Class for all Nations
-
-class Nation:
-    """ 
+""" 
 to do list
 - allies DONE
 - trade partners -- more or less done
 - population ?
 - army size ? 
-- is in union? junior or senior? 
+- is in union? junior or senior?  -- more or less done (until war is done)
 - treaties 
 - war
 - income
@@ -47,6 +36,17 @@ War based work:
 - Land Combat
 
 """
+
+
+
+
+
+
+
+# Class for all Nations
+
+class Nation:
+
     def __init__(self, name, owner, allies=[], tps=[], union="", uP=""):
         self.name = name # name of nation
         self.owner = owner # name of owner (of nation)
@@ -177,10 +177,9 @@ class CreateNation(ui.Modal, title="Nation Information"):
         
         await interaction.response.send_message(f"The nation {self.name.value} has been added to the database.") # response to user 
 
-
 # creating a nation in class nation
 @tree.command(name = "createnation", description="Creates a nation in the database.", guild = testServer)
-async def self(interaction: discord.Interaction):
+async def createNation(interaction: discord.Interaction):
     newNation = CreateNation()
     await interaction.response.send_modal(newNation)
  
@@ -190,7 +189,7 @@ async def self(interaction: discord.Interaction):
 
 # shows all the commands accessible
 @tree.command(name = "help", description="Lists all the commands possible with Conwylia Bot.", guild = discord.Object(id=1010602651060277279))
-async def self(interaction: discord.Interaction):
+async def help(interaction: discord.Interaction):
     await interaction.response.send_message("""
 The following commands are active: 
 ```
@@ -208,6 +207,7 @@ The following commands are active:
 /removepartner (Name of Nation) (Name of Trade Partner)             -- Removes a trade partnership between two nations in the database.
 /union (Name of Nation)                                             -- Says whether a nation is in a union and with whom in the database.
 /unionize (Name of Nation) (Name of Union Nation) (Seniority)       -- Enters into a union with another nation in the database.
+/deunionize (Name of Nation) (Name of Union Nation)                 -- Breaks a union with another nation in the database.
 ```
 """) # all possible commands. Honestly I think I read that there was a better way to do this, but I can't find it, so I have to update it manually, therefore I forget about it until I'm reminded.
  
@@ -222,7 +222,6 @@ async def nationInfo(interaction: discord.Interaction, nation_name: str):
         await interaction.response.send_message("That nation doesn't exist in the database.", ephemeral=True) # whenever the bot sends a message ephemerally, it sends it as a hidden message, so it only gets sent to the user who sent the command. This allows for you to easily remedy the mistake and doesn't call attention to the mistake.
 # I'm trying to make all error messages happen this way, in assumption that the user didn't mean to mess up, so it makes it easier to fix it quietly. It might be reasonable to supply the user with the exact information they gave the bot, but eh
 # Looking forward, whenever I talk about a quiet response or something, this is what I mean. It responds personally to the user only.
-
 @nationInfo.autocomplete("nation_name")
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=nation_name, value=nation_name) for nation_name in stored.keys() if current.lower() in nation_name.lower()]
@@ -294,7 +293,6 @@ async def nally(interaction: discord.Interaction, nation_name: str, allied_natio
 @nally.autocomplete("nation_name")
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=nation_name, value=nation_name) for nation_name in stored.keys() if current.lower() in nation_name.lower()]
-
 @nally.autocomplete("allied_nation_name")
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=allied_nation_name, value=allied_nation_name) for allied_nation_name in stored.keys() if current.lower() in allied_nation_name.lower()]
@@ -322,7 +320,6 @@ async def rally(interaction: discord.Interaction, nation_name: str, allied_natio
 @rally.autocomplete("nation_name")
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=nation_name, value=nation_name) for nation_name in stored.keys() if current.lower() in nation_name.lower()]
-
 @rally.autocomplete("allied_nation_name")
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=allied_nation_name, value=allied_nation_name) for allied_nation_name in stored.keys() if current.lower() in allied_nation_name.lower()]
@@ -368,7 +365,6 @@ async def npart(interaction:discord.Interaction, nation_name: str, trade_partner
 @npart.autocomplete("nation_name")
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=nation_name, value=nation_name) for nation_name in stored.keys() if current.lower() in nation_name.lower()]
-
 @npart.autocomplete("trade_partner_nation")
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=trade_partner_nation, value=trade_partner_nation) for trade_partner_nation in stored.keys() if current.lower() in trade_partner_nation.lower()]
@@ -408,7 +404,6 @@ async def rpart(interaction:discord.Interaction, nation_name: str, trade_partner
 @rpart.autocomplete("nation_name")
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=nation_name, value=nation_name) for nation_name in stored.keys() if current.lower() in nation_name.lower()]
-
 @rpart.autocomplete("trade_partner_nation")
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=trade_partner_nation, value=trade_partner_nation) for trade_partner_nation in stored.keys() if current.lower() in trade_partner_nation.lower()]
@@ -472,7 +467,6 @@ async def unionize(interaction:discord.Interaction, nation_name: str, union_nati
 @unionize.autocomplete("nation_name")
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=nation_name, value=nation_name) for nation_name in stored.keys() if current.lower() in nation_name.lower()]
-
 @unionize.autocomplete("union_nation")
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=union_nation, value=union_nation) for union_nation in stored.keys() if current.lower() in union_nation.lower()]
@@ -526,7 +520,6 @@ async def deunion(interaction:discord.Interaction, nation_name: str, union_natio
 @deunion.autocomplete("nation_name")
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=nation_name, value=nation_name) for nation_name in stored.keys() if current.lower() in nation_name.lower()]
-
 @deunion.autocomplete("union_nation")
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=union_nation, value=union_nation) for union_nation in stored.keys() if current.lower() in union_nation.lower()]
