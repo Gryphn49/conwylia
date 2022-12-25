@@ -97,9 +97,12 @@ class Nation:
         self.unionStatus = union # is union -- Options: blank (not set), False, Senior, Junior
         self.uP = uP # union partner
         self.tiles = tiles # list of Tile instances that the nation has
-        self.resources = [] # ideally a list of Resource class instances 
+        self.resources = [] # ideally a list of Resource class instances
         for tile in self.tiles: # for each individual Tile instance in tiles
             self.resources += tile.res
+        self.pop = 0
+        for tile in self.tiles:
+            self.pop += tile.pop
 
     def setOwner(self, newOwner): # sets a new owner
         self.owner = newOwner
@@ -588,6 +591,14 @@ async def autocomplete(interaction: discord.Interaction, current: str,) -> List[
 async def autocomplete(interaction: discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=union_nation, value=union_nation) for union_nation in stored.keys() if current.lower() in union_nation.lower()]
 
+
+@tree.command(name="population", description="Shows a nation's population.", guild=testServer)
+async def population(interaction:discord.Interaction, nation_name: str):
+    await interaction.response.send_message(f"%s has a population of %d." % (nation_name, nations[nation_name].pop))
+
+@population.autocomplete("nation_name")
+async def autocomplete(interaction:discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
+    return [app_commands.Choice(name=nation_name, value=nation_name) for nation_name in stored.keys() if current.lower() in nation_name.lower()]
 
 
 # @tree.command(name="blank", description="blank", guild=testServer)
