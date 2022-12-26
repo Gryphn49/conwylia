@@ -108,8 +108,10 @@ class Nation:
         
         # population
         self.pop = 0 # population of nation IN THOUSANDS
+        # population due to tiles
         for tile in self.tiles: # for each individual tile, find the population due to tiles
             self.pop += tile["pop"] # this defines the population of the nation (based on the tiles)
+        #worked tiles
         self.wtNumMax = (6 if len(self.tiles) < 11 else 5 if len(self.tiles) < 16 else 4 if len(self.tiles) < 21 else 2 if len(self.tiles) < 26 else 0)  # max worked tiles number
         self.wtList = [] # list of all worked tiles
         for tile in self.wtList: # for each worked tile
@@ -124,9 +126,9 @@ class Nation:
         self.capital = "" # there can only be one capital, so name of capital
         self.capital += (30 if self.capital != "" else 0) # adding population due to capital
         self.communitiesNum = len(self.villages)+len(self.towns)+len(self.cities)+(1 if self.capital != "" else 0) # total number of commuinities -- on second though, this will not be overly useful :)
-        # I'm giving a break here cuz I want to show separation between water access and communities.
+        # water access
         self.wA = 0 # water access
-
+        
 
         # income
         self.income = 0 # overall income of a nation
