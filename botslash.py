@@ -78,6 +78,8 @@ tileLake = Tile("Lake", 0, [], False)                       #
 tileRiver = Tile("River", 0, [], False)                     #
 tileOcean = Tile("Ocean", 0, [], False)                     #
 
+tileTypes = [tileMountain,tileHills,tilePlains,tileSavannah,tileTundra,tileForest]
+tileNametoClass = {"Mountain":tileMountain,"Hills":tileHills,"Plains":tilePlains,"Savannah":tileSavannah,"Tundra":tileTundra,"Forest":tileForest} # etc.
 
 
 
@@ -161,11 +163,11 @@ class Nation:
 
     def tileList(self):
         tileNames = [tile.name for tile in self.tiles]  
-        print(self.name + "has the following tiles: " + ", ".join(tileNames) +".")
+        print(self.name + " has the following tiles: " + ", ".join(tileNames) +".")
 
     def resourceList(self):
         resourceNames = [resource.name for resource in self.resources]
-        print(self.name + "has the following resources: " + ", ".join(resourceNames) +".")
+        print(self.name + " has the following resources: " + ", ".join(resourceNames) +".")
 
 
 
@@ -180,11 +182,12 @@ with open(nationFile, "rb") as tf:
 print(stored) # prints stored -- honestly as more or less a check for me to see that everything looks fine. This can be removed later.
 
 # to prevent nations from messing *everything* up -- this is just here for whenever I add a new attribute to the nation class, because then some nations might have the new thing, and others won't. nations then freaks out when it has something different.
-# for key in stored:  
+for key in stored:  
 #     stored[key]["tps"] = []
 #     stored[key]["allies"] = [] 
 #     stored[key]["un"] = ""
 #     stored[key]["uP"] = ""
+    stored[key]["tiles"] = []
 
 
 
@@ -192,14 +195,14 @@ print(stored) # prints stored -- honestly as more or less a check for me to see 
 
 # stored layout ==      stored = {"name" : {"owner":"x", "allies":["x","y"], "tps":["x","y"], "un":"Senior", "uP":"x", ...}, "name2" : and so on}
 
-nations = {key: Nation(key, stored[key]["owner"], stored[key]["allies"], stored[key]["tps"], stored[key]["un"], stored[key]["uP"]) for key in stored} # creates nation class for each nation from the information provided in stored.
+nations = {key: Nation(key, stored[key]["owner"], stored[key]["allies"], stored[key]["tps"], stored[key]["un"], stored[key]["uP"], stored[key]["tiles"]) for key in stored} # creates nation class for each nation from the information provided in stored.
 # as it was described to me after I did it and it looked confusing, stored is the layout that the pickle file needs to not lose information, and nations is the layout I need/like to make use of the class so that I can do stuff.
 # in an ideal world, stored would only be opened once, and saved/closed once, but given how I'm shutting the code without it being able to do finally code, I need to have it save after each update to it. This can probably be changed at a later point, but it works currently.
 
 
 idk = Nation("idk", "wat", [], [], "", "", [tileMountain, tileForest, tileForest])
-idk.tileList()
-idk.resourceList()
+nations["test"].tileList()
+nations["test"].resourceList()
 
 
 
@@ -234,16 +237,38 @@ tree = app_commands.CommandTree(client) # setting up the command tree through di
 class CreateNation(ui.Modal, title="Nation Information"):
     name = ui.TextInput(label="Name")
     owner = ui.TextInput(label="Owner")
+    tiles = ui.TextInput(label="List of Tiles")
+    
 
     async def on_submit(self, interaction: discord.Interaction):
+        try:
+            print(tileNametoClass)
+            print(tileTypes)
+            strTileList = self.tiles.value.split()
+            print(strTileList)
+            tileList = []
+            print(tileList)
+            for i in strTileList:
+                print(i)
+                for tile in tileTypes:
+                    print(tile)
+                    if i == tile.name:
+                        tileList.append(tile)
+                print(tileList)
+        except:
+            await interaction.response.send_message(f"The layout of the tile list was incorrect.", ephemeral=True)
         nations[self.name.value] = Nation(self.name.value, self.owner.value)     # nation created 
-        stored[nations[self.name.value].name] = {"owner" : self.owner.value, "allies":[],"tps":[],"un":"","uP":""}     # nation added to storage dictionary
+        stored[nations[self.name.value].name] = {"owner" : self.owner.value, "allies":[],"tps":[],"un":"","uP":"","tiles":tileList}     # nation added to storage dictionary
         with open(nationFile, "wb") as tf:    # storing all the nations and info
             pickle.dump(stored,tf)
             tf.close() 
-        
         await interaction.response.send_message(f"The nation {self.name.value} has been added to the database.") # response to user 
 
+
+    async def on_timeout(self, interaction) -> None:
+        await interaction.response.send_message(f"Nation creation timed out.", ephemeral=True)
+        
+        
 # creating a nation in class nation
 @tree.command(name = "createnation", description="Creates a nation in the database.", guild = testServer)
 async def createNation(interaction: discord.Interaction):
