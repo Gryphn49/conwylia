@@ -13,14 +13,14 @@ from discord import ui
 to do list
 - allies DONE
 - trade partners -- more or less done
-- population ?
+- population DONE -- I don't like it, but it's done.
 - army size ? 
 - is in union? junior or senior?  -- more or less done (until war is done)
 - treaties 
 - war
 - income
     - separated into different types via taxes, trade, and so on
-- resources
+- resources -- partially done
 - buildings
 - expenses
 - just kinda overall the time in the play world lol
@@ -61,20 +61,20 @@ resFur = dict(name="Furs", type="Lux", desc="Furs are an essential luxury item t
 #          self.res = res # resources of tile in a list displaying the Resource instance of the resources given by the tile.
 #          self.rt = rt # rough terrain y/n
 
-tileMountain = dict(name="Mountain", pop=5, res=[resIron], rt=True)         # sometimes gold/gems
-tileHills = dict(name="Hills", pop=15, res=[], rt=True)                     # sometimes iron
-tilePlains = dict(name="Plains", pop=20, res=[], rt=False)                  # sometimes horse
-tileSavannah = dict(name="Savannah", pop=15, res=[], rt=False)              # sometimes horse or iron
-tileTundra = dict(name="Tundra", pop=10, res=[], rt=False)                  # sometimes fur
-tileForest = dict(name="Forest", pop=15, res=[resWood, resWood], rt=True)   # no sometimes :)
-tileTaiga = dict(name="Taiga", pop=10, res=[resWood, resWood], rt=True)     # sometimes fur
-tileMarsh = dict(name="Marsh", pop=10, res=[resWood], rt=True)              # no sometimes :)
-tileJungle = dict(name="Jungle", pop=5, res=[resWood, resWood], rt=True)    # sometimes spice
-tileDesert = dict(name="Desert", pop=0, res=[], rt=False)                   # 
-tileIce = dict(name="Ice", pop=0, res=[], rt=False)                         # sometimes gold or iron
-tileLake = dict(name="Lake", pop=0, res=[], rt=False)                       #
-tileRiver = dict(name="River", pop=0, res=[], rt=False)                     #
-tileOcean = dict(name="Ocean", pop=0, res=[], rt=False)                     #
+tileMountain = dict(name="Mountain", pop=5, res=[resIron], rt=True, workedNum=3)         # sometimes gold/gems
+tileHills = dict(name="Hills", pop=15, res=[], rt=True, workedNum=8)                     # sometimes iron
+tilePlains = dict(name="Plains", pop=20, res=[], rt=False, workedNum=10)                  # sometimes horse
+tileSavannah = dict(name="Savannah", pop=15, res=[], rt=False, workedNum=8)              # sometimes horse or iron
+tileTundra = dict(name="Tundra", pop=10, res=[], rt=False, workedNum=5)                  # sometimes fur
+tileForest = dict(name="Forest", pop=15, res=[resWood, resWood], rt=True, workedNum=8)   # no sometimes :)
+tileTaiga = dict(name="Taiga", pop=10, res=[resWood, resWood], rt=True, workedNum=5)     # sometimes fur
+tileMarsh = dict(name="Marsh", pop=10, res=[resWood], rt=True, workedNum=5)              # no sometimes :)
+tileJungle = dict(name="Jungle", pop=5, res=[resWood, resWood], rt=True, workedNum=3)    # sometimes spice
+tileDesert = dict(name="Desert", pop=0, res=[], rt=False, workedNum=0)                   # 
+tileIce = dict(name="Ice", pop=0, res=[], rt=False, workedNum=0)                         # sometimes gold or iron
+tileLake = dict(name="Lake", pop=0, res=[], rt=False, workedNum=0)                       #
+tileRiver = dict(name="River", pop=0, res=[], rt=False, workedNum=0)                     #
+tileOcean = dict(name="Ocean", pop=0, res=[], rt=False, workedNum=0)                     #
 
 tileTypes = [tileMountain,tileHills,tilePlains,tileSavannah,tileTundra,tileForest]
 tileNametoClass = {"Mountain":tileMountain,"Hills":tileHills,"Plains":tilePlains,"Savannah":tileSavannah,"Tundra":tileTundra,"Forest":tileForest} # etc.
@@ -90,19 +90,48 @@ tileNametoClass = {"Mountain":tileMountain,"Hills":tileHills,"Plains":tilePlains
 class Nation:
 
     def __init__(self, name, owner, allies=[], tps=[], union="", uP="", tiles=[]): # these things are necessary to be stored to memory.
+        # base information
         self.name = name # name of nation
         self.owner = owner # name of owner (of nation)
+        self.tiles = tiles # list of Tile instances that the nation has
+
+        # diplomacy
         self.allies = allies # list of allies
         self.tradePart = tps # list  of trade partners
         self.unionStatus = union # is union -- Options: blank (not set), False, Senior, Junior
         self.uP = uP # union partner
-        self.tiles = tiles # list of Tile instances that the nation has
-        self.resources = [] # ideally a list of Resource class instances
-        for tile in self.tiles: # for each individual Tile instance in tiles
-            self.resources += tile["res"]
-        self.pop = 0
-        for tile in self.tiles:
-            self.pop += tile["pop"]
+
+        # resources 
+        self.resources = [] # a list of resource dictionary instances
+        for tile in self.tiles: # for each individual tile, find the resources
+            self.resources += tile["res"] # this defines the resources of the nation
+        
+        # population
+        self.pop = 0 # population of nation IN THOUSANDS
+        for tile in self.tiles: # for each individual tile, find the population due to tiles
+            self.pop += tile["pop"] # this defines the population of the nation (based on the tiles)
+        self.wtNumMax = (6 if len(self.tiles) < 11 else 5 if len(self.tiles) < 16 else 4 if len(self.tiles) < 21 else 2 if len(self.tiles) < 26 else 0)  # max worked tiles number
+        self.wtList = [] # list of all worked tiles
+        for tile in self.wtList: # for each worked tile
+            self.pop += tile["workedNum"] # this defines the population added by worked tiles
+        # communities
+        self.villages = [] # total list of villages
+        self.pop += len(self.villages)*5 # adding population due to villages
+        self.towns = [] # total list of towns
+        self.pop += len(self.towns)*10 # adding population due to towns
+        self.cities = [] # total list of cities
+        self.pop += len(self.cities)*20 # adding population due to cities
+        self.capital = "" # there can only be one capital, so name of capital
+        self.capital += (30 if self.capital != "" else 0) # adding population due to capital
+        self.communitiesNum = len(self.villages)+len(self.towns)+len(self.cities)+(1 if self.capital != "" else 0) # total number of commuinities -- on second though, this will not be overly useful :)
+        # I'm giving a break here cuz I want to show separation between water access and communities.
+        self.wA = 0 # water access
+
+
+        # income
+        self.income = 0 # overall income of a nation
+        self.taxes = 0 # overall income due to taxes
+        self.idk = 0
 
     def setOwner(self, newOwner): # sets a new owner
         self.owner = newOwner
@@ -600,7 +629,7 @@ async def autocomplete(interaction: discord.Interaction, current: str,) -> List[
 
 @tree.command(name="population", description="Shows a nation's population.", guild=testServer)
 async def population(interaction:discord.Interaction, nation_name: str):
-    await interaction.response.send_message(f"%s has a population of %d." % (nation_name, nations[nation_name].pop))
+    await interaction.response.send_message(f"%s has a population of %dk." % (nation_name, nations[nation_name].pop))
 
 @population.autocomplete("nation_name")
 async def autocomplete(interaction:discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
