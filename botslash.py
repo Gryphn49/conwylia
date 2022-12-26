@@ -37,46 +37,44 @@ War based work:
 
 """
 
+class Resource():
+
+    def __init__(self):
+        return
+
 # calling a nation's resource 
-class Resource:
+resIron = dict(name="Iron", type="Mil", desc="Used to equip armies with weapons.")
+resHorse = dict(name="Horse", type="Mil", desc="Horses are used by the cavalry units of a nation.")
+resWood = dict(name="Wood", type="Mil", desc="Wood is used to make ships.")
 
-    def __init__(self, name, type, desc):
-        self.name = name
-        self.desc = desc
-        self.type = type
-
-resIron = Resource("Iron", "Mil", "Used to equip armies with weapons.")
-resHorse = Resource("Horse", "Mil", "Horses are used by the cavalry units of a nation.")
-resWood = Resource("Wood", "Mil", "Wood is used to make ships.")
-
-resGold = Resource("Gold", "Lux", "Gold has always been very rare and an expensive luxury item.")
-resGem = Resource("Gems", "Lux", "Jewels have always been very rare and expensive luxury items.")
-resSpice = Resource("Spices", "Lux", "Spices are a very good way to preserve and season foods, and are a hot commodity among people who can get their hands on them.")
-resFur = Resource("Furs", "Lux", "Furs are an essential luxury item to those living in cold climates, or just want to look fancy.")
+resGold = dict(name="Gold", type="Lux", desc="Gold has always been very rare and an expensive luxury item.")
+resGem = dict(name="Gems", type="Lux", desc="Jewels have always been very rare and expensive luxury items.")
+resSpice = dict(name="Spices", type="Lux", desc="Spices are a very good way to preserve and season foods, and are a hot commodity among people who can get their hands on them.")
+resFur = dict(name="Furs", type="Lux", desc="Furs are an essential luxury item to those living in cold climates, or just want to look fancy.")
 
 # this is the tile class for all nation's tiles
 class Tile:
 
-    def __init__(self, name, pop, res, rt):
-        self.name = name # type of tile
-        self.pop = pop # population of said tile in thousands
-        self.res = res # resources of tile in a list displaying the Resource instance of the resources given by the tile.
-        self.rt = rt # rough terrain y/n
+     def __init__(self, name, pop, res, rt):
+         self.name = name # type of tile
+         self.pop = pop # population of said tile in thousands
+         self.res = res # resources of tile in a list displaying the Resource instance of the resources given by the tile.
+         self.rt = rt # rough terrain y/n
 
-tileMountain = Tile("Mountain", 5, [resIron], True)         # sometimes gold/gems
-tileHills = Tile("Hills", 15, [], True)                     # sometimes iron
-tilePlains = Tile("Plains", 20, [], False)                  # sometimes horse
-tileSavannah = Tile("Savannah", 15, [], False)              # sometimes horse or iron
-tileTundra = Tile("Tundra", 10, [], False)                  # sometimes fur
-tileForest = Tile("Forest", 15, [resWood, resWood], True)   # no sometimes :)
-tileTaiga = Tile("Taiga", 10, [resWood, resWood], True)     # sometimes fur
-tileMarsh = Tile("Marsh", 10, [resWood], True)              # no sometimes :)
-tileJungle = Tile("Jungle", 5, [resWood, resWood], True)    # sometimes spice
-tileDesert = Tile("Desert", 0, [], False)                   # 
-tileIce = Tile("Ice", 0, [], False)                         # sometimes gold or iron
-tileLake = Tile("Lake", 0, [], False)                       #
-tileRiver = Tile("River", 0, [], False)                     #
-tileOcean = Tile("Ocean", 0, [], False)                     #
+tileMountain = dict(name="Mountain", pop=5, res=[resIron], rt=True)         # sometimes gold/gems
+tileHills = dict(name="Hills", pop=15, res=[], rt=True)                     # sometimes iron
+tilePlains = dict(name="Plains", pop=20, res=[], rt=False)                  # sometimes horse
+tileSavannah = dict(name="Savannah", pop=15, res=[], rt=False)              # sometimes horse or iron
+tileTundra = dict(name="Tundra", pop=10, res=[], rt=False)                  # sometimes fur
+tileForest = dict(name="Forest", pop=15, res=[resWood, resWood], rt=True)   # no sometimes :)
+tileTaiga = dict(name="Taiga", pop=10, res=[resWood, resWood], rt=True)     # sometimes fur
+tileMarsh = dict(name="Marsh", pop=10, res=[resWood], rt=True)              # no sometimes :)
+tileJungle = dict(name="Jungle", pop=5, res=[resWood, resWood], rt=True)    # sometimes spice
+tileDesert = dict(name="Desert", pop=0, res=[], rt=False)                   # 
+tileIce = dict(name="Ice", pop=0, res=[], rt=False)                         # sometimes gold or iron
+tileLake = dict(name="Lake", pop=0, res=[], rt=False)                       #
+tileRiver = dict(name="River", pop=0, res=[], rt=False)                     #
+tileOcean = dict(name="Ocean", pop=0, res=[], rt=False)                     #
 
 tileTypes = [tileMountain,tileHills,tilePlains,tileSavannah,tileTundra,tileForest]
 tileNametoClass = {"Mountain":tileMountain,"Hills":tileHills,"Plains":tilePlains,"Savannah":tileSavannah,"Tundra":tileTundra,"Forest":tileForest} # etc.
@@ -91,7 +89,7 @@ tileNametoClass = {"Mountain":tileMountain,"Hills":tileHills,"Plains":tilePlains
 
 class Nation:
 
-    def __init__(self, name, owner, allies=[], tps=[], union="", uP="", tiles=[]):
+    def __init__(self, name, owner, allies=[], tps=[], union="", uP="", tiles=[]): # these things are necessary to be stored to memory.
         self.name = name # name of nation
         self.owner = owner # name of owner (of nation)
         self.allies = allies # list of allies
@@ -101,10 +99,10 @@ class Nation:
         self.tiles = tiles # list of Tile instances that the nation has
         self.resources = [] # ideally a list of Resource class instances
         for tile in self.tiles: # for each individual Tile instance in tiles
-            self.resources += tile.res
+            self.resources += tile["res"]
         self.pop = 0
         for tile in self.tiles:
-            self.pop += tile.pop
+            self.pop += tile["pop"]
 
     def setOwner(self, newOwner): # sets a new owner
         self.owner = newOwner
@@ -162,12 +160,20 @@ class Nation:
         self.unionStatus = "False"
 
     def tileList(self):
-        tileNames = [tile.name for tile in self.tiles]  
-        print(self.name + " has the following tiles: " + ", ".join(tileNames) +".")
+        tileNames = [tile["name"] for tile in self.tiles]  
+        return(f"{self.name} has the following tiles: " + ", ".join(tileNames) +".")
 
     def resourceList(self):
-        resourceNames = [resource.name for resource in self.resources]
-        print(self.name + " has the following resources: " + ", ".join(resourceNames) +".")
+        resourceNames = [resource["name"] for resource in self.resources]
+        numeratedResources = []
+        for i in resourceNames:
+            resourceNum = resourceNames.count(i)
+            if resourceNum == 0:
+                continue
+            resourceName = str(resourceNum) + "x " + i
+            numeratedResources.append(resourceName)
+            resourceNames = list(filter((i).__ne__,resourceNames))
+        return(f"{self.name} has the following resources: " + ", ".join(numeratedResources) +".")
 
 
 
@@ -182,12 +188,12 @@ with open(nationFile, "rb") as tf:
 print(stored) # prints stored -- honestly as more or less a check for me to see that everything looks fine. This can be removed later.
 
 # to prevent nations from messing *everything* up -- this is just here for whenever I add a new attribute to the nation class, because then some nations might have the new thing, and others won't. nations then freaks out when it has something different.
-for key in stored:  
+# for key in stored:  
 #     stored[key]["tps"] = []
 #     stored[key]["allies"] = [] 
 #     stored[key]["un"] = ""
 #     stored[key]["uP"] = ""
-    stored[key]["tiles"] = []
+    # stored[key]["tiles"] = []
 
 
 
@@ -200,9 +206,9 @@ nations = {key: Nation(key, stored[key]["owner"], stored[key]["allies"], stored[
 # in an ideal world, stored would only be opened once, and saved/closed once, but given how I'm shutting the code without it being able to do finally code, I need to have it save after each update to it. This can probably be changed at a later point, but it works currently.
 
 
-idk = Nation("idk", "wat", [], [], "", "", [tileMountain, tileForest, tileForest])
-nations["test"].tileList()
-nations["test"].resourceList()
+# idk = Nation("idk", "wat", [], [], "", "", [tileMountain, tileForest, tileForest])
+# nations["test"].tileList()
+# nations["test"].resourceList()
 
 
 
@@ -250,10 +256,7 @@ class CreateNation(ui.Modal, title="Nation Information"):
             print(tileList)
             for i in strTileList:
                 print(i)
-                for tile in tileTypes:
-                    print(tile)
-                    if i == tile.name:
-                        tileList.append(tile)
+                tileList.append(tileNametoClass[i])
                 print(tileList)
         except:
             await interaction.response.send_message(f"The layout of the tile list was incorrect.", ephemeral=True)
@@ -625,6 +628,10 @@ async def population(interaction:discord.Interaction, nation_name: str):
 async def autocomplete(interaction:discord.Interaction, current: str,) -> List[app_commands.Choice[str]]:
     return [app_commands.Choice(name=nation_name, value=nation_name) for nation_name in stored.keys() if current.lower() in nation_name.lower()]
 
+
+@tree.command(name="tiles", description="Shows all the tiles of a nation.", guild=testServer)
+async def self(interaction:discord.Interaction):
+    return
 
 # @tree.command(name="blank", description="blank", guild=testServer)
 # async def self(interaction:discord.Interaction):
