@@ -37,10 +37,10 @@ War based work:
 
 """
 
-class Resource():
+# class Resource():
 
-    def __init__(self):
-        return
+#     def __init__(self):
+#         return
 
 # calling a nation's resource 
 resIron = dict(name="Iron", type="Mil", desc="Used to equip armies with weapons.")
@@ -53,13 +53,13 @@ resSpice = dict(name="Spices", type="Lux", desc="Spices are a very good way to p
 resFur = dict(name="Furs", type="Lux", desc="Furs are an essential luxury item to those living in cold climates, or just want to look fancy.")
 
 # this is the tile class for all nation's tiles
-class Tile:
+# class Tile:
 
-     def __init__(self, name, pop, res, rt):
-         self.name = name # type of tile
-         self.pop = pop # population of said tile in thousands
-         self.res = res # resources of tile in a list displaying the Resource instance of the resources given by the tile.
-         self.rt = rt # rough terrain y/n
+#      def __init__(self, name, pop, res, rt):
+#          self.name = name # type of tile
+#          self.pop = pop # population of said tile in thousands
+#          self.res = res # resources of tile in a list displaying the Resource instance of the resources given by the tile.
+#          self.rt = rt # rough terrain y/n
 
 tileMountain = dict(name="Mountain", pop=5, res=[resIron], rt=True)         # sometimes gold/gems
 tileHills = dict(name="Hills", pop=15, res=[], rt=True)                     # sometimes iron
@@ -152,7 +152,6 @@ class Nation:
         if seniority == True: # sets senior nation vs junior nation
             self.unionStatus = "Senior"
         else: 
-            
             self.unionStatus = "Junior"
 
     def deUnionize(self): # removes a union, just sets everything to a blank/false status -- IK this needs some war stuff to actually happen, but since I don't have information on war yet, I can't do that.
@@ -195,28 +194,16 @@ print(stored) # prints stored -- honestly as more or less a check for me to see 
 #     stored[key]["uP"] = ""
     # stored[key]["tiles"] = []
 
-
-
-
-
 # stored layout ==      stored = {"name" : {"owner":"x", "allies":["x","y"], "tps":["x","y"], "un":"Senior", "uP":"x", ...}, "name2" : and so on}
 
 nations = {key: Nation(key, stored[key]["owner"], stored[key]["allies"], stored[key]["tps"], stored[key]["un"], stored[key]["uP"], stored[key]["tiles"]) for key in stored} # creates nation class for each nation from the information provided in stored.
 # as it was described to me after I did it and it looked confusing, stored is the layout that the pickle file needs to not lose information, and nations is the layout I need/like to make use of the class so that I can do stuff.
 # in an ideal world, stored would only be opened once, and saved/closed once, but given how I'm shutting the code without it being able to do finally code, I need to have it save after each update to it. This can probably be changed at a later point, but it works currently.
 
-
+# This is a testing area that I've been using for Nation work that I've found problematic.
 # idk = Nation("idk", "wat", [], [], "", "", [tileMountain, tileForest, tileForest])
 # nations["test"].tileList()
 # nations["test"].resourceList()
-
-
-
-
-
-
-
-
 
 testServer = discord.Object(id=1010602651060277279) # this is our bot testing server -- I can probably change this to the main Conwylia server when we get to that point.
 class aclient(discord.Client): # this entire class sets up the commands to work more or less, I don't want to mess with it because I don't fully understand what it's doing because the discord.py documentation hurts my head to deal with.
@@ -235,9 +222,7 @@ client = aclient() # calling the code to create the client
 tree = app_commands.CommandTree(client) # setting up the command tree through discord.
 
 
-
-
-
+# The following is all commands for the discord bot.
 
 # modal ui and creation of nation on submit
 class CreateNation(ui.Modal, title="Nation Information"):
@@ -248,16 +233,10 @@ class CreateNation(ui.Modal, title="Nation Information"):
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
-            print(tileNametoClass)
-            print(tileTypes)
             strTileList = self.tiles.value.split()
-            print(strTileList)
             tileList = []
-            print(tileList)
             for i in strTileList:
-                print(i)
                 tileList.append(tileNametoClass[i])
-                print(tileList)
         except:
             await interaction.response.send_message(f"The layout of the tile list was incorrect.", ephemeral=True)
         nations[self.name.value] = Nation(self.name.value, self.owner.value)     # nation created 
@@ -269,9 +248,8 @@ class CreateNation(ui.Modal, title="Nation Information"):
 
 
     async def on_timeout(self, interaction) -> None:
-        await interaction.response.send_message(f"Nation creation timed out.", ephemeral=True)
-        
-        
+        await interaction.response.send_message(f"Nation creation timed out.", ephemeral=True) 
+
 # creating a nation in class nation
 @tree.command(name = "createnation", description="Creates a nation in the database.", guild = testServer)
 async def createNation(interaction: discord.Interaction):
