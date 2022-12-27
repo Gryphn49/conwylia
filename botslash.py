@@ -76,10 +76,45 @@ tileLake = dict(name="Lake", pop=0, res=[], rt=False, workedNum=0)              
 tileRiver = dict(name="River", pop=0, res=[], rt=False, workedNum=0)                     #
 tileOcean = dict(name="Ocean", pop=0, res=[], rt=False, workedNum=0)                     #
 
-tileTypes = [tileMountain,tileHills,tilePlains,tileSavannah,tileTundra,tileForest]
-tileNametoClass = {"Mountain":tileMountain,"Hills":tileHills,"Plains":tilePlains,"Savannah":tileSavannah,"Tundra":tileTundra,"Forest":tileForest} # etc.
+tileNametoClass = {"Mountain":tileMountain,"Hills":tileHills,"Plains":tilePlains,"Savannah":tileSavannah,"Tundra":tileTundra,"Forest":tileForest,"Taiga":tileTaiga,"Marsh":tileMarsh,"Jungle":tileJungle,"Desert":tileDesert,"Ice":tileIce,"Lake":tileLake,"River":tileRiver,} # etc.
 
-
+async def addTile(tile,interaction,clicked,msg,tileList):
+    global nations
+    global stored
+    last_key = list(nations)[-1]
+    if clicked == False:
+        msg = f"The tiles contained by {last_key} are: {tile} tiles: 1."
+        await interaction.response.edit_message(content=msg)
+        clicked = True
+    elif f"{tile} tiles: " in msg:
+        index = msg.find(f"{tile} tiles: ") + (len(tile)+8)
+        numTiles = ""
+        looped = 0
+        for letter in msg[index:]:
+            if letter.isnumeric():
+                numTiles += letter
+                looped += 1
+            else:
+                break 
+        msgp1 = msg[:(index-1)]
+        msgp2 = msg[(index+looped):]
+        msg = f"{msgp1} {(int(numTiles)+1)}{msgp2}"
+        await interaction.response.edit_message(content=msg)
+    else:
+        msg = f"{msg[:-1]}, {tile} tiles: 1."
+        await interaction.response.edit_message(content=msg)
+    
+    tileList.append(tileNametoClass[f"{tile}"])
+    print(last_key)
+    print(tileList)
+    nations[last_key].addTiles(tileList)
+    stored[nations[last_key].name] = {"owner" : nations[last_key].owner, "allies":[],"tps":[],"un":"","uP":"","tiles":tileList}
+    with open(nationFile, "wb") as tf:    # storing all the nations and info
+        pickle.dump(stored,tf)
+        tf.close()
+    tileList = []
+    print(f"TileList AT END: {tileList}.")
+    return msg, clicked, tileList
 
 # Class for all Nations
 
@@ -123,7 +158,12 @@ class Nation:
         self.pop = 0 # population of nation IN THOUSANDS
         # population due to tiles
         for tile in self.tiles: # for each individual tile, find the population due to tiles
+            print(f"Tile: {(tile['name'])}.")
+            print(f"Current Pop: {self.pop}.")
+            print(f"Tile Pop: {tile['pop']}.")
             self.pop += tile["pop"] # this defines the population of the nation (based on the tiles)
+            print(f"Current Pop After Tile: {self.pop}")
+        print(f"Pop After: {self.pop}")
         #worked tiles
         self.wtNumMax = (6 if len(self.tiles) < 11 else 5 if len(self.tiles) < 16 else 4 if len(self.tiles) < 21 else 2 if len(self.tiles) < 26 else 0)  # max worked tiles number
         self.wtList = [] # list of all worked tiles
@@ -146,13 +186,12 @@ class Nation:
     def setOwner(self, newOwner): # sets a new owner
         self.owner = newOwner
 
-    def setTiles(self, tileList):
-        if tileList == self.tiles:
-            return
-        else:
-            self.tiles = tileList
-            self.checkPopulation()
-            self.checkResources()
+    def addTiles(self, tileList):
+        self.tiles += tileList
+        print(self.pop)
+        self.checkPopulation()
+        print(self.pop)
+        self.checkResources()
 
     # diplomacy
     def ally(self, ally): # allies with another nation (adds an ally to the allies list) -- does not check to see if it's an actual nation here. That's done a bit more frontly.
@@ -278,47 +317,123 @@ class TileSelect(discord.ui.View):
     strTileList = []
     clicked = False
     msg = ""
-    @discord.ui.button(label="Mountain", style=discord.ButtonStyle.primary)
+    disabledB = False
+    @discord.ui.button(label="Mountain", style=discord.ButtonStyle.success)
     async def mountain_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        last_key = list(nations)[-1]
-        if self.clicked == False:
-            await interaction.response.edit_message(content=f"The tiles contained by {last_key} are: Mountains: 1")
-            self.clicked = True
-        elif "Mountains: " in self.msg:
-            index = self.msg.find("Mountains: ") + 11
-            numTiles = ""
-            looped = 0
-            for letter in self.msg[index:]:
-                if letter.isnumeric():
-                    numTiles += letter
-                    looped += 1
-                else:
-                    return 
-            msgp1 = self.msg[:(index-1)]
-            msgp2 = self.msg[(index+looped):]
-            await interaction.response.edit_message(f"{msgp1} {(int(numTiles)+1)} {msgp2}")
+        if self.disabledB:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
         else:
-            await interaction.response.edit_message(f"{self.msg[:-1]}, Mountains: 1.")
+            self.msg, self.clicked, self.tileList = await addTile("Mountain",interaction, self.clicked, self.msg, self.tileList)
 
-        
-        self.tileList.append(tileNametoClass["Mountain"])
-        print(self.tileList)
-        print(last_key)
-        print(nations[last_key].pop)
-        nations[last_key].setTiles(self.tileList)
-        print(nations[last_key].pop)
-        stored[nations[last_key].name] = {"owner" : nations[last_key].owner, "allies":[],"tps":[],"un":"","uP":"","tiles":self.tileList}
-        with open(nationFile, "wb") as tf:    # storing all the nations and info
-            pickle.dump(stored,tf)
-            tf.close()  
+    @discord.ui.button(label="Hills", style=discord.ButtonStyle.success)
+    async def hills_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.disabledB:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
+        else:
+            self.msg, self.clicked, self.tileList = await addTile("Hills",interaction, self.clicked, self.msg, self.tileList)
 
-    @discord.ui.button(label="Forest", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Plains", style=discord.ButtonStyle.success)
+    async def plains_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.disabledB:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
+        else:
+            self.msg, self.clicked = await addTile("Plains",interaction, self.clicked, self.msg, self.tileList)
+
+    @discord.ui.button(label="Savannah", style=discord.ButtonStyle.success)
+    async def savannah_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.disabledB:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
+        else:
+            self.msg, self.clicked = await addTile("Savannah",interaction, self.clicked, self.msg, self.tileList)
+
+    @discord.ui.button(label="Tundra", style=discord.ButtonStyle.success)
+    async def tundra_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.disabledB:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
+        else:
+            self.msg, self.clicked = await addTile("Tundra",interaction, self.clicked, self.msg, self.tileList)
+
+    @discord.ui.button(label="Forest", style=discord.ButtonStyle.success)
     async def forest_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        print("forest")
+        if self.disabledB:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
+        else:
+            self.msg, self.clicked = await addTile("Forest",interaction, self.clicked, self.msg, self.tileList)
 
-    @discord.ui.button(label="Desert", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Taiga", style=discord.ButtonStyle.success)
+    async def taiga_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.disabledB:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
+        else:
+            self.msg, self.clicked = await addTile("Taiga",interaction, self.clicked, self.msg, self.tileList)
+
+    @discord.ui.button(label="Marsh", style=discord.ButtonStyle.success)
+    async def marsh_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.disabledB:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
+        else:
+            self.msg, self.clicked = await addTile("Marsh",interaction, self.clicked, self.msg, self.tileList)
+
+    @discord.ui.button(label="Jungle", style=discord.ButtonStyle.success)
+    async def jungle_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.disabledB:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
+        else:
+            self.msg, self.clicked = await addTile("Jungle",interaction, self.clicked, self.msg, self.tileList)
+
+    @discord.ui.button(label="Desert", style=discord.ButtonStyle.success)
     async def desert_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
-        print("desert")
+        if self.disabledB:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
+        else:
+            self.msg, self.clicked = await addTile("Desert",interaction, self.clicked, self.msg, self.tileList)
+
+    @discord.ui.button(label="Ice", style=discord.ButtonStyle.success)
+    async def ice_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.disabledB:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
+        else:
+            self.msg, self.clicked = await addTile("Ice",interaction, self.clicked, self.msg, self.tileList)
+
+    @discord.ui.button(label="Lake", style=discord.ButtonStyle.primary)
+    async def lake_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.disabledB:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
+        else:
+            self.msg, self.clicked = await addTile("Lake",interaction, self.clicked, self.msg, self.tileList)
+
+    @discord.ui.button(label="River", style=discord.ButtonStyle.primary)
+    async def river_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.disabledB:
+            button.disabled = True
+            await interaction.response.edit_message(view=self)
+        else:
+            self.msg, self.clicked = await addTile("River",interaction, self.clicked, self.msg, self.tileList)
+    
+    @discord.ui.button(label="Finish", style=discord.ButtonStyle.red)
+    async def complete_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        button.disabled = True
+        self.disabledB = True
+        await interaction.response.edit_message(content=f"Nation {list(nations)[-1]} has been created.", view=self)
+        self.tileList = []
+        self.clicked = False
+        self.msg = ""
+    
+
+
+    
 # modal ui and creation of nation on submit
 class CreateNation(ui.Modal, title="Nation Information"):
     name = ui.TextInput(label="Name")
