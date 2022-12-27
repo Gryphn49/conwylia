@@ -102,10 +102,23 @@ class Nation:
         self.uP = uP # union partner
 
         # resources 
+        self.checkResources() # all check functions are based upon something else (namely tiles), so they have their own check command that are run every time tiles, or whatever affects them, are changed.
+        
+        # population
+        self.checkPopulation() # read checkResources() comment
+
+        # income
+        self.income = 0 # overall income of a nation
+        self.taxes = 0 # overall income due to taxes
+        self.idk = 0
+
+    # check info -- used when info that affects other things are changed (i.e. tiles)
+    def checkResources(self):
         self.resources = [] # a list of resource dictionary instances
         for tile in self.tiles: # for each individual tile, find the resources
             self.resources += tile["res"] # this defines the resources of the nation
-        
+
+    def checkPopulation(self):
         # population
         self.pop = 0 # population of nation IN THOUSANDS
         # population due to tiles
@@ -124,20 +137,24 @@ class Nation:
         self.cities = [] # total list of cities
         self.pop += len(self.cities)*20 # adding population due to cities
         self.capital = "" # there can only be one capital, so name of capital
-        self.capital += (30 if self.capital != "" else 0) # adding population due to capital
+        self.pop += (30 if self.capital != "" else 0) # adding population due to capital
         self.communitiesNum = len(self.villages)+len(self.towns)+len(self.cities)+(1 if self.capital != "" else 0) # total number of commuinities -- on second though, this will not be overly useful :)
         # water access
         self.wA = 0 # water access
-        
 
-        # income
-        self.income = 0 # overall income of a nation
-        self.taxes = 0 # overall income due to taxes
-        self.idk = 0
-
+    # change info
     def setOwner(self, newOwner): # sets a new owner
         self.owner = newOwner
 
+    def setTiles(self, tileList):
+        if tileList == self.tiles:
+            return
+        else:
+            self.tiles = tileList
+            self.checkPopulation()
+            self.checkResources()
+
+    # diplomacy
     def ally(self, ally): # allies with another nation (adds an ally to the allies list) -- does not check to see if it's an actual nation here. That's done a bit more frontly.
         self.allies.append(ally)
 
@@ -189,6 +206,7 @@ class Nation:
         self.uP = ""
         self.unionStatus = "False"
 
+    # tiles
     def tileList(self):
         tileNames = [tile["name"] for tile in self.tiles]  
         return(f"{self.name} has the following tiles: " + ", ".join(tileNames) +".")
@@ -255,30 +273,67 @@ tree = app_commands.CommandTree(client) # setting up the command tree through di
 
 # The following is all commands for the discord bot.
 
+class TileSelect(discord.ui.View): 
+    tileList = []
+    strTileList = []
+    clicked = False
+    msg = ""
+    @discord.ui.button(label="Mountain", style=discord.ButtonStyle.primary)
+    async def mountain_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        last_key = list(nations)[-1]
+        if self.clicked == False:
+            await interaction.response.edit_message(content=f"The tiles contained by {last_key} are: Mountains: 1")
+            self.clicked = True
+        elif "Mountains: " in self.msg:
+            index = self.msg.find("Mountains: ") + 11
+            numTiles = ""
+            looped = 0
+            for letter in self.msg[index:]:
+                if letter.isnumeric():
+                    numTiles += letter
+                    looped += 1
+                else:
+                    return 
+            msgp1 = self.msg[:(index-1)]
+            msgp2 = self.msg[(index+looped):]
+            await interaction.response.edit_message(f"{msgp1} {(int(numTiles)+1)} {msgp2}")
+        else:
+            await interaction.response.edit_message(f"{self.msg[:-1]}, Mountains: 1.")
+
+        
+        self.tileList.append(tileNametoClass["Mountain"])
+        print(self.tileList)
+        print(last_key)
+        print(nations[last_key].pop)
+        nations[last_key].setTiles(self.tileList)
+        print(nations[last_key].pop)
+        stored[nations[last_key].name] = {"owner" : nations[last_key].owner, "allies":[],"tps":[],"un":"","uP":"","tiles":self.tileList}
+        with open(nationFile, "wb") as tf:    # storing all the nations and info
+            pickle.dump(stored,tf)
+            tf.close()  
+
+    @discord.ui.button(label="Forest", style=discord.ButtonStyle.primary)
+    async def forest_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        print("forest")
+
+    @discord.ui.button(label="Desert", style=discord.ButtonStyle.primary)
+    async def desert_callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+        print("desert")
 # modal ui and creation of nation on submit
 class CreateNation(ui.Modal, title="Nation Information"):
     name = ui.TextInput(label="Name")
     owner = ui.TextInput(label="Owner")
-    tiles = ui.TextInput(label="List of Tiles")
-    
 
     async def on_submit(self, interaction: discord.Interaction):
-        try:
-            strTileList = self.tiles.value.split()
-            tileList = []
-            for i in strTileList:
-                tileList.append(tileNametoClass[i])
-        except:
-            await interaction.response.send_message(f"The layout of the tile list was incorrect.", ephemeral=True)
-        nations[self.name.value] = Nation(self.name.value, self.owner.value)     # nation created 
-        stored[nations[self.name.value].name] = {"owner" : self.owner.value, "allies":[],"tps":[],"un":"","uP":"","tiles":tileList}     # nation added to storage dictionary
+        await interaction.response.send_message(f"What tiles does {self.name.value} contain?", view=TileSelect())
+
+        nations[self.name.value] = Nation(self.name.value, self.owner.value)
+        stored[nations[self.name.value].name] = {"owner" : self.owner.value, "allies":[],"tps":[],"un":"","uP":"","tiles":[]}     # nation added to storage dictionary
         with open(nationFile, "wb") as tf:    # storing all the nations and info
             pickle.dump(stored,tf)
-            tf.close() 
-        await interaction.response.send_message(f"The nation {self.name.value} has been added to the database.") # response to user 
+            tf.close()
 
-
-    async def on_timeout(self, interaction) -> None:
+    async def on_timeout(self, interaction):
         await interaction.response.send_message(f"Nation creation timed out.", ephemeral=True) 
 
 # creating a nation in class nation
@@ -286,7 +341,7 @@ class CreateNation(ui.Modal, title="Nation Information"):
 async def createNation(interaction: discord.Interaction):
     newNation = CreateNation()
     await interaction.response.send_modal(newNation)
- 
+
 
 
 
